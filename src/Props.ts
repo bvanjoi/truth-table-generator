@@ -1,22 +1,22 @@
-const formats = [
-  ["/\\", "\\/",   "~", "->", "<->", "^"],
-  ["/\\", "\\/",   "¬", "->",   "↔", "^"],
-  ["and",  "or", "not", "=>", "<=>", "^"],
-  [ "&&",  "||",   "!", "=>",   "↔", "^"]
-];
-
+enum PropValue {
+  PropFalse,
+  PropTrue
+}
 
 class Prop {
 }
 
 class PropVar extends Prop {
-  private var:string;
-  constructor(variable: string) {
+  private variable: string;
+  private value: PropValue;
+
+  constructor(variable: string, value: PropValue) {
     super();
-    this.var = variable;
+    this.variable = variable;
+    this.value = value;
   }
   toString() {
-    return this.var;
+    return this.variable;
   }
 }
 
@@ -24,22 +24,28 @@ class PropTrue extends Prop {
   constructor() {
     super();
   }
+  toString() {
+    return 'T';
+  }
 }
 
 class PropFalse extends Prop {
   constructor() {
     super();
   }
+  toString() {
+    return 'F';
+  }
 }
 
 class PropNot extends Prop {
-  private var:PropVar;
+  private variable:PropVar;
   constructor(variable:PropVar) {
     super();
-    this.var = variable;
+    this.variable = variable;
   }
   toString() {
-    return "~" + this.var;
+    return "(¬" + this.variable + ")";
   }
 }
 
@@ -108,21 +114,34 @@ class PropXor extends Prop {
   }
 }
 
-const p = new PropVar("p");
-const q = new PropVar("q");
-let test = new PropNot(p);
-console.log(test.toString());
+export {
+  PropValue,
+  Prop,
+  PropVar,
+  PropTrue,
+  PropFalse,
+  PropAnd,
+  PropOr,
+  PropXor,
+  PropNot,
+  PropImplies,
+  PropEqual
+};
 
-/**
- * 
- * 
- * @param {string} inputLine 
- */
-const parentheses = (inputLine) => {
-
-}
-
-const inputLine = "test/\\fds↔afcx\/vd&&sa~ds<->(af<=>ffad)->ds!af=>asx¬(wetqs^a)";
-const pattern = /\/\\|\/|and|&&|or|\|\||!|~|not|~|¬|->|=>|\^|xor|↔|<->|<=>/gi;
-console.log(inputLine.split(pattern));
-console.log(inputLine.match(pattern));
+// test
+// 除了 proxy 之外，好奇 js 中有无类似于 python 中 __str__ 的函数？
+// const p = new PropVar("p");
+// const q = new PropVar("q");
+// console.log( p.toString());
+// const testAnd = new PropAnd(p,q);
+// console.log(testAnd.toString());
+// const testOr = new PropOr(p,q);
+// console.log(testOr.toString());
+// const testXor = new PropXor(p,q);
+// console.log(testXor.toString());
+// const testNot = new PropNot(p);
+// console.log(testNot.toString());
+// const testImplies = new PropImplies(p,q);
+// console.log(testImplies.toString());
+// const testEqual = new PropEqual(p,q);
+// console.log(testEqual.toString());

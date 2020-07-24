@@ -8,11 +8,33 @@ html, body {
 
 .content {
   border: 1px solid black;
-  border-radius: 1rem;
+  border-radius: 8px;
   margin-top: 1rem;
-  min-width: 40rem;
+  min-width: 35rem;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
+ }
+
+.overview {
+  margin-bottom: 1rem;
+}
+
+.button {
+  margin-bottom: 1rem;
+}
+
+
+.input {
+  margin-bottom: 1rem;
+}
+
+.input input {
+  font-size: 20px;
+  height: 2rem;
+  border-radius: 8px;
+}
+.input input:focus {
+  border-color: transparent;
 }
