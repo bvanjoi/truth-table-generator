@@ -1,211 +1,5 @@
-# 写一个真值表
+const priority = ["~", "/\\", "^", "\\/", "->", "<->"];
 
-好久没接触命题逻辑，很多内容容易忘记，所以写一款真值表小工具，用来回忆。
-
-## 数学
-
-我们的输出遵从以下规则：
-
-非：
-|p|~p|
-|-|-|-|
-|F|T|
-|T|F|
-
-与：
-|p|q|p /\ q|
-|-|-|-|
-|F|F|F|
-|F|T|F|
-|T|F|F|
-|T|T|T|
-
-或：
-|p|q|p \\/ q|
-|-|-|-|
-|F|F|F|
-|F|T|T|
-|T|F|T|
-|T|T|T|
-
-蕴含：
-|p|q|p -> q|
-|-|-|-|
-|F|F|T|
-|F|T|T|
-|T|F|F|
-|T|T|T|
-
-异或：
-|p|q|p ^ q|
-|-|-|-|
-|F|F|F|
-|F|T|T|
-|T|F|T|
-|T|T|F|
-
-另外，连接词优先级从大到小排列有：~, /\, ^, \/, ->, <->.
-
-## 算法
-
-### 数据结构
-
-首先定义一套数据结构，该数据结构描述了最基本的命题逻辑(Prop.ts)。
-
-```javascript
-class Prop {
-}
-
-class PropVar extends Prop {
-  private var:string;
-  constructor(variable: string) {
-    super();
-    this.var = variable;
-  }
-  toString() {
-    return this.var;
-  }
-}
-
-class PropTrue extends Prop {
-  constructor() {
-    super();
-  }
-}
-
-class PropFalse extends Prop {
-  constructor() {
-    super();
-  }
-}
-
-class PropNot extends Prop {
-  private var:PropVar;
-  constructor(variable:PropVar) {
-    super();
-    this.var = variable;
-  }
-  toString() {
-    return "(¬" + this.var + ")";
-  }
-}
-
-class PropAnd extends Prop {
-  private left:PropVar;
-  private right:PropVar;
-  constructor(leftVar:PropVar, rightVar:PropVar) {
-    super();
-    this.left = leftVar;
-    this.right = rightVar;
-  }
-  toString() {
-    return "(" + this.left + " /\\ " + this.right + ")";
-  }
-}
-
-class PropOr extends Prop {
-  private left:PropVar;
-  private right:PropVar;
-  constructor(leftVar:PropVar, rightVar:PropVar) {
-    super();
-    this.left = leftVar;
-    this.right = rightVar;
-  }
-  toString() {
-    return "(" + this.left + " \\/ " + this.right + ")";
-  }
-}
-
-class PropImplies extends Prop {
-  private left:PropVar;
-  private right:PropVar;
-  constructor(leftVar:PropVar, rightVar:PropVar) {
-    super();
-    this.left = leftVar;
-    this.right = rightVar;
-  }
-  toString() {
-    return "(" + this.left + " -> " + this.right + ")";
-  }
-}
-
-class PropEqual extends Prop {
-  private left:PropVar;
-  private right:PropVar;
-  constructor(leftVar:PropVar, rightVar:PropVar) {
-    super();
-    this.left = leftVar;
-    this.right = rightVar;
-  }
-  toString() {
-    return "(" + this.left + " <-> " + this.right + ")";
-  }
-}
-
-class PropXor extends Prop {
-  private left:PropVar;
-  private right:PropVar;
-  constructor(leftVar:PropVar, rightVar:PropVar) {
-    super();
-    this.left = leftVar;
-    this.right = rightVar;
-  }
-  toString() {
-    return "(" + this.left + " ^ " + this.right + ")";
-  }
-}
-
-export {
-  Prop,
-  PropVar,
-  PropTrue,
-  PropFalse,
-  PropAnd,
-  PropOr,
-  PropXor,
-  PropNot,
-  PropImplies,
-  PropEqual
-};
-```
-
-### 编译
-
-之后，便是写一个简单的编译器，将输入的命题逻辑拆分成以上的数据结构的形式。
-
-假定存在一个输入的字符串 inputLine, 该字符串中描述的是一个命题逻辑。
-
-先确定连接词：
-
-```javascript
-const formats = ["/\", "\/",   "~", "->", "<->", "^"];
-```
-
-据此，可以确定语法树：
-
-```bash
-E1 ::= E1 <-> E2
-E2 ::= E2  -> E3
-E3 ::= E3  \/ E4
-E4 ::= E4  ^  E5
-E5 ::= E5  /\ E6
-E6 ::= ~E6
-```
-
-往下大致的结构就是：
-
-```bash
-inputLine -> 词法解析器 tokenizer
-          -> 符号串
-          -> 文法分析器 parser
-          -> 抽象语法树 parse
-          -> 后端代码生成
-          -> 目标代码生成
-```
-
-首先是 词法解析器，这一部分的目的就是将  `a/\b`, 解析为 `PropAnd(Prop('a'), Prop('b'))`, 这里简写为 `['a', '/\', 'b']`, 以符号串的形式存储。另外此处，还是利用栈来检测用户输入内容格式的是否正确：
-
-```javascript
 /**
  * check a variable name is satisfy rules.
  * 
@@ -281,7 +75,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
         while( checkStack.length && checkStack[checkStack.length-1] === '~'){
           checkStack.pop();
         }
-        checkStack.push(temp);
+        checkStack.push(temp); 
       }
     } else if( conjunction.indexOf(s) !== -1) {
       if( s === '~') {
@@ -300,7 +94,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
       } else {
         if(checkStack.length === 0 ||
           checkStack[checkStack.length - 1] === '(' ||
-          conjunction.indexOf( checkStack[checkStack.length - 1]) !== -1
+          conjunction.indexOf( checkStack[checkStack.length - 1]) !== -1 
           ) {
           console.log(s, " left should be a vars")
           return false;
@@ -309,7 +103,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
         }
       }
     } else if( satisfyVariable(s)) {
-      if( checkStack.length === 0
+      if( checkStack.length === 0 
         || checkStack[checkStack.length - 1] === '(')  {
         checkStack.push(s);
       } else if( satisfyVariable(checkStack[checkStack.length - 1])) {
@@ -342,7 +136,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
  * 
  */
 const tokenizer = (inputLine:string) => {
-  const priority = ["~", "/\\", "^", "\\/", "->", "<->"];
+  // console.log(inputLine)
   const pattern = /(\s*~\s*|\s*\/\\\s*|\s*\^\s*|\s*\\\/\s*|\s*->\s*|\s*<->\s*|\s*\(\s*|\s*\)\s*| )/g
   // cut
   const inputArr = inputLine.split(pattern).filter(value=>value.length);
@@ -350,19 +144,9 @@ const tokenizer = (inputLine:string) => {
   if(!check(inputArr, priority)) {
     throw new Error('The string your input is not valid!');
   }
-  return inputArr.map(value => value.trim()).join('');
+  return inputArr.map(value => value.trim());
 }
-```
 
-再往下一部分，parser:
-
-这里需要考虑一个非常重要的问题：如何保证生成的语法树的正确性？以四则运算为例，1 + 2 * 3 和 (1 + 2) * 3 稍有不慎，即可能生成完全一样的语法树，从而导致计算错误。
-
-其实，到这里之后，我也卡了很久，从刚开始的递归思路，一直想到想到事情的关键：计算顺序。
-
-语法树的目的是生成正确的计算顺序，此时，完全可以用栈来实现。
-
-```javascript
 /**
  * according to the syntax, parse to Props.
  * 
@@ -461,8 +245,8 @@ const parser = (inputArr:string[]) => {
   function postToInWithParentheses( inputArr:string[]) {
     let recordStack:string[] = [];
     for( let it of inputArr) {
-      console.log('recordStack:', recordStack);
-      console.log(); 
+      // console.log('recordStack:', recordStack);
+      // console.log(); 
       if( priority.indexOf( it) !== -1) {
         let conjunction:string;
         if( it === '~') {
@@ -489,17 +273,15 @@ const parser = (inputArr:string[]) => {
     }
     return recordStack;
   }
-  console.log( inToPost( inputArr))
-  console.log( postToInWithParentheses(inToPost( inputArr))); 
+  // console.log( inToPost( inputArr))
+  // console.log( postToInWithParentheses(inToPost( inputArr)));
+  const postExp = inToPost(inputArr);
+  return {
+    postExp,
+    inExpWithParen: postToInWithParentheses(postExp)
+  } 
 }
-```
 
-走完以上代码，我们已经可以实现了最核心的功能。接下来，只需要转化为 Props（其实不转也没事），之后枚举计算即可。
-
-为了保证风格的统一，我们将上述生成的代码转化为 Props 的形式。
-
-## 样式
-
-决定使用 h5 + css 做页面，首先就是脑海中有一个样式（当然有条件可以做一个 UI 图），之后便可以开始 coding.
-
-具体过程就不写了，这里给出 html 和 css 的代码和最终生成结果：
+// const Line = "(a \\/ b) /\\ c -> (d <-> e) ^ f";
+const Line = "( test /\\ (_fds<->afn) ^ dcx \\/ vd) /\\ ~ s1sand <->(notaf<->~~fforad)->t/\\(~not -> xwtqs^a)->we/\\b\\/(adcc/\\b)";
+console.log(parser(tokenizer(Line)));

@@ -10,7 +10,7 @@ class PropVar extends Prop {
   private variable: string;
   private value: PropValue;
 
-  constructor(variable: string, value: PropValue) {
+  constructor(variable: string, value: PropValue = PropValue.PropFalse) {
     super();
     this.variable = variable;
     this.value = value;
@@ -45,7 +45,7 @@ class PropNot extends Prop {
     this.variable = variable;
   }
   toString() {
-    return "(¬" + this.variable + ")";
+    return (new PropLeftParen).toString() + "¬" + this.variable + (new PropRightParen).toString();
   }
 }
 
@@ -58,7 +58,7 @@ class PropAnd extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " /\\ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " /\\ " + this.right + (new PropRightParen).toString();
   }
 }
 
@@ -71,7 +71,7 @@ class PropOr extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " \\/ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " \\/ " + this.right + (new PropRightParen).toString();
   }
 }
 
@@ -84,7 +84,7 @@ class PropImplies extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " -> " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " -> " + this.right + (new PropRightParen).toString();
   }
 }
 
@@ -97,7 +97,7 @@ class PropEqual extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " <-> " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " <-> " + this.right + (new PropRightParen).toString();
   }
 }
 
@@ -110,7 +110,26 @@ class PropXor extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " ^ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " ^ " + this.right + (new PropRightParen).toString();
+  }
+}
+
+
+class PropLeftParen extends Prop {
+  constructor(){
+    super();
+  }
+  toString(){
+    return '(';
+  }
+}
+
+class PropRightParen extends Prop {
+  constructor(){
+    super();
+  }
+  toString(){
+    return ')';
   }
 }
 
@@ -127,7 +146,6 @@ export {
   PropImplies,
   PropEqual
 };
-
 // test
 // 除了 proxy 之外，好奇 js 中有无类似于 python 中 __str__ 的函数？
 // const p = new PropVar("p");
@@ -145,3 +163,6 @@ export {
 // console.log(testImplies.toString());
 // const testEqual = new PropEqual(p,q);
 // console.log(testEqual.toString());
+
+// 返回的结果是 false, 这里就需要确定如何保证两个同样的字符串只生成一个 PropVar();
+console.log( new PropVar('a') === new PropVar('a')) 
