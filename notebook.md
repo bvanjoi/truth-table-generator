@@ -12,6 +12,14 @@
 |F|T|
 |T|F|
 
+或：
+|p|q|p \\/ q|
+|-|-|-|
+|F|F|F|
+|F|T|T|
+|T|F|T|
+|T|T|T|
+
 与：
 |p|q|p /\ q|
 |-|-|-|
@@ -20,13 +28,6 @@
 |T|F|F|
 |T|T|T|
 
-或：
-|p|q|p \\/ q|
-|-|-|-|
-|F|F|F|
-|F|T|T|
-|T|F|T|
-|T|T|T|
 
 蕴含：
 |p|q|p -> q|
@@ -44,6 +45,14 @@
 |T|F|T|
 |T|T|F|
 
+全等:
+|p|q|p <-> q|
+|-|-|-|
+|F|F|T|
+|F|T|F|
+|T|F|F|
+|T|T|T|
+
 另外，连接词优先级从大到小排列有：~, /\, ^, \/, ->, <->.
 
 ## 算法
@@ -53,17 +62,28 @@
 首先定义一套数据结构，该数据结构描述了最基本的命题逻辑(Prop.ts)。
 
 ```javascript
+enum PropValue {
+  PropFalse = 0,
+  PropTrue = 1
+}
+
 class Prop {
 }
 
 class PropVar extends Prop {
-  private var:string;
-  constructor(variable: string) {
+  private variable: string;
+  private value: PropValue;
+
+  constructor(variable: string, value: PropValue = PropValue.PropFalse) {
     super();
-    this.var = variable;
+    this.variable = variable;
+    this.value = value;
   }
   toString() {
-    return this.var;
+    return this.variable;
+  }
+  getResult() {
+    return this.value;
   }
 }
 
@@ -71,35 +91,60 @@ class PropTrue extends Prop {
   constructor() {
     super();
   }
+  toString() {
+    return 'T';
+  }
+  getResult() {
+    return PropValue.PropTrue;
+  }
 }
 
 class PropFalse extends Prop {
   constructor() {
     super();
   }
+  toString() {
+    return 'F';
+  }
+  getResult() {
+    return PropValue.PropFalse;
+  }
 }
 
 class PropNot extends Prop {
-  private var:PropVar;
+  private variable:PropVar;
   constructor(variable:PropVar) {
     super();
-    this.var = variable;
+    this.variable = variable;
+  }
+  getVar() {
+    return this.variable;
   }
   toString() {
-    return "(¬" + this.var + ")";
+    return (new PropLeftParen).toString() + "¬" + this.variable + (new PropRightParen).toString();
+  }
+  getResult() {
+    return this.variable.getResult() === PropValue.PropFalse ? PropValue.PropTrue : PropValue.PropTrue;
   }
 }
 
 class PropAnd extends Prop {
   private left:PropVar;
-  private right:PropVar;
+  private right:PropVar; 
   constructor(leftVar:PropVar, rightVar:PropVar) {
     super();
     this.left = leftVar;
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " /\\ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " /\\ " + this.right + (new PropRightParen).toString();
+  }
+  getResult() {
+    return (this.left.getResult() && this.right.getResult()) === PropValue.PropTrue 
+            ?  
+            PropValue.PropTrue
+            :
+            PropValue.PropFalse;
   }
 }
 
@@ -112,7 +157,14 @@ class PropOr extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " \\/ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " \\/ " + this.right + (new PropRightParen).toString();
+  }
+  getResult() {
+    return (this.left.getResult() || this.right.getResult()) === PropValue.PropFalse
+          ?
+          PropValue.PropFalse
+          :
+          PropValue.PropTrue;
   }
 }
 
@@ -125,7 +177,11 @@ class PropImplies extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " -> " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " -> " + this.right + (new PropRightParen).toString();
+  }
+  getResult() {
+    return new PropOr( new PropNot(this.left).
+    etVar(), this.right).getResult();
   }
 }
 
@@ -138,7 +194,10 @@ class PropEqual extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " <-> " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " <-> " + this.right + (new PropRightParen).toString();
+  }
+  getResult() {
+    return this.left.getResult() === this.right.getResult() ? PropValue.PropTrue : PropValue.PropFalse;
   }
 }
 
@@ -151,11 +210,34 @@ class PropXor extends Prop {
     this.right = rightVar;
   }
   toString() {
-    return "(" + this.left + " ^ " + this.right + ")";
+    return (new PropLeftParen).toString() + this.left + " ^ " + this.right + (new PropRightParen).toString();
+  }
+  getResult() {
+    return this.left.getResult() === this.right.getResult() ? PropValue.PropFalse : PropValue.PropTrue;
+  }
+}
+
+
+class PropLeftParen extends Prop {
+  constructor(){
+    super();
+  }
+  toString(){
+    return '(';
+  }
+}
+
+class PropRightParen extends Prop {
+  constructor(){
+    super();
+  }
+  toString(){
+    return ')';
   }
 }
 
 export {
+  PropValue,
   Prop,
   PropVar,
   PropTrue,
@@ -178,7 +260,7 @@ export {
 先确定连接词：
 
 ```javascript
-const formats = ["/\", "\/",   "~", "->", "<->", "^"];
+const formats = ["/\\", "\\/",   "~", "->", "<->", "^"];
 ```
 
 据此，可以确定语法树：

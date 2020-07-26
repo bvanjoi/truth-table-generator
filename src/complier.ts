@@ -1,3 +1,5 @@
+import { PropNot, PropVar, Prop, PropAnd, PropOr, PropImplies, PropEqual, PropXor, PropTrue, PropFalse } from "./props";
+
 const priority = ["~", "/\\", "^", "\\/", "->", "<->"];
 
 /**
@@ -243,45 +245,61 @@ const parser = (inputArr:string[]) => {
    * @param {string[]} inputArr
    */
   function postToInWithParentheses( inputArr:string[]) {
-    let recordStack:string[] = [];
+    let recordPropStack = [];
     for( let it of inputArr) {
-      // console.log('recordStack:', recordStack);
+      // console.log('recordPropStack:', recordPropStack);
       // console.log(); 
       if( priority.indexOf( it) !== -1) {
-        let conjunction:string;
+        let conjunctionProp: Prop;
         if( it === '~') {
-          conjunction = '(~' +recordStack.pop() +')';
+          conjunctionProp = new PropNot( recordPropStack.pop());
         } else {
-          const temp1 = recordStack.pop(); // 为了保持原有顺序
-          const temp2 = recordStack.pop();
-          // result.push('(');
-          // result.push( temp2);
-          // result.push( it);
-          // result.push( temp1); 
-          // result.push(')');
-          conjunction = '(' + temp2 + it + temp1 + ')';
+          const tempProp1 = recordPropStack.pop();
+          const tempProp2 = recordPropStack.pop();
+          switch(it){
+            case '/\\':
+              conjunctionProp = new PropAnd( tempProp2, tempProp1);
+              break;
+            case '\\/':
+              conjunctionProp = new PropOr( tempProp2, tempProp1);
+              break;
+            case '->':
+              conjunctionProp = new PropImplies( tempProp2, tempProp1);
+              break;
+            case '<->':
+              conjunctionProp = new PropEqual( tempProp2, tempProp1);
+              break;
+            case '^':
+              conjunctionProp = new PropXor( tempProp2, tempProp1);
+              break;
+          }
         }
-        recordStack.push( conjunction);
+        recordPropStack.push( conjunctionProp);
         continue;
       }
-      switch(it) {
-        case '(':
-        case ')':
-        default :
-          recordStack.push( it);
+      if( it !== '(' && it !== ')') {
+        if( it === 'T') {
+          recordPropStack.push( new PropTrue());
+        } else if( it === 'F'){
+          recordPropStack.push( new PropFalse());
+        } else {
+          recordPropStack.push( new PropVar(it));
+        }
       }
     }
-    return recordStack;
+    return recordPropStack.pop(); // 此时，栈内部大小肯定为 1.
   }
   // console.log( inToPost( inputArr))
   // console.log( postToInWithParentheses(inToPost( inputArr)));
   const postExp = inToPost(inputArr);
+  const parseExp = postToInWithParentheses(postExp);
   return {
     postExp,
-    inExpWithParen: postToInWithParentheses(postExp)
+    inExpWithParen: parseExp.toString(),
+    propExp: parseExp
   } 
 }
 
 // const Line = "(a \\/ b) /\\ c -> (d <-> e) ^ f";
-const Line = "( test /\\ (_fds<->afn) ^ dcx \\/ vd) /\\ ~ s1sand <->(notaf<->~~fforad)->t/\\(~not -> xwtqs^a)->we/\\b\\/(adcc/\\b)";
+const Line = "( test /\\ (_fds<->a /\\ T \\/ fn) ^ dcx \\/ vd) /\\ ~ s1sand <->(notaf<->~~fforad)->F/\\(~not -> xwtqs^a)->we/\\b\\/(adcc/\\b)";
 console.log(parser(tokenizer(Line)));
