@@ -28,12 +28,19 @@
 |T|F|F|
 |T|T|T|
 
-
 蕴含：
 |p|q|p -> q|
 |-|-|-|
 |F|F|T|
 |F|T|T|
+|T|F|F|
+|T|T|T|
+
+全等:
+|p|q|p <-> q|
+|-|-|-|
+|F|F|T|
+|F|T|F|
 |T|F|F|
 |T|T|T|
 
@@ -45,15 +52,10 @@
 |T|F|T|
 |T|T|F|
 
-全等:
-|p|q|p <-> q|
-|-|-|-|
-|F|F|T|
-|F|T|F|
-|T|F|F|
-|T|T|T|
-
 另外，连接词优先级从大到小排列有：~, /\, ^, \/, ->, <->.
+
+
+(以下过程已作废)
 
 ## 算法
 
@@ -62,40 +64,27 @@
 首先定义一套数据结构，该数据结构描述了最基本的命题逻辑(Prop.ts)。
 
 ```javascript
-enum PropValue {
-  PropFalse = 0,
-  PropTrue = 1
-}
-
 class Prop {
 }
 
 class PropVar extends Prop {
   private variable: string;
-  private value: PropValue;
 
-  constructor(variable: string, value: PropValue = PropValue.PropFalse) {
+  constructor(variable: string) {
     super();
     this.variable = variable;
-    this.value = value;
   }
   toString() {
     return this.variable;
   }
-  getResult() {
-    return this.value;
-  }
 }
 
-class PropTrue extends Prop {
+class PropTrue extends Prop  {
   constructor() {
     super();
   }
   toString() {
-    return 'T';
-  }
-  getResult() {
-    return PropValue.PropTrue;
+    return '⊤';
   }
 }
 
@@ -104,10 +93,7 @@ class PropFalse extends Prop {
     super();
   }
   toString() {
-    return 'F';
-  }
-  getResult() {
-    return PropValue.PropFalse;
+    return '⊥';
   }
 }
 
@@ -117,14 +103,8 @@ class PropNot extends Prop {
     super();
     this.variable = variable;
   }
-  getVar() {
-    return this.variable;
-  }
   toString() {
     return (new PropLeftParen).toString() + "¬" + this.variable + (new PropRightParen).toString();
-  }
-  getResult() {
-    return this.variable.getResult() === PropValue.PropFalse ? PropValue.PropTrue : PropValue.PropTrue;
   }
 }
 
@@ -139,13 +119,7 @@ class PropAnd extends Prop {
   toString() {
     return (new PropLeftParen).toString() + this.left + " /\\ " + this.right + (new PropRightParen).toString();
   }
-  getResult() {
-    return (this.left.getResult() && this.right.getResult()) === PropValue.PropTrue 
-            ?  
-            PropValue.PropTrue
-            :
-            PropValue.PropFalse;
-  }
+
 }
 
 class PropOr extends Prop {
@@ -158,13 +132,6 @@ class PropOr extends Prop {
   }
   toString() {
     return (new PropLeftParen).toString() + this.left + " \\/ " + this.right + (new PropRightParen).toString();
-  }
-  getResult() {
-    return (this.left.getResult() || this.right.getResult()) === PropValue.PropFalse
-          ?
-          PropValue.PropFalse
-          :
-          PropValue.PropTrue;
   }
 }
 
@@ -179,10 +146,6 @@ class PropImplies extends Prop {
   toString() {
     return (new PropLeftParen).toString() + this.left + " -> " + this.right + (new PropRightParen).toString();
   }
-  getResult() {
-    return new PropOr( new PropNot(this.left).
-    etVar(), this.right).getResult();
-  }
 }
 
 class PropEqual extends Prop {
@@ -196,9 +159,6 @@ class PropEqual extends Prop {
   toString() {
     return (new PropLeftParen).toString() + this.left + " <-> " + this.right + (new PropRightParen).toString();
   }
-  getResult() {
-    return this.left.getResult() === this.right.getResult() ? PropValue.PropTrue : PropValue.PropFalse;
-  }
 }
 
 class PropXor extends Prop {
@@ -211,9 +171,6 @@ class PropXor extends Prop {
   }
   toString() {
     return (new PropLeftParen).toString() + this.left + " ^ " + this.right + (new PropRightParen).toString();
-  }
-  getResult() {
-    return this.left.getResult() === this.right.getResult() ? PropValue.PropFalse : PropValue.PropTrue;
   }
 }
 
@@ -237,7 +194,6 @@ class PropRightParen extends Prop {
 }
 
 export {
-  PropValue,
   Prop,
   PropVar,
   PropTrue,
@@ -250,6 +206,8 @@ export {
   PropEqual
 };
 ```
+
+（写到最后，发现其实只用上 toString() 部分。。）
 
 ### 编译
 
@@ -288,6 +246,7 @@ inputLine -> 词法解析器 tokenizer
 首先是 词法解析器，这一部分的目的就是将  `a/\b`, 解析为 `PropAnd(Prop('a'), Prop('b'))`, 这里简写为 `['a', '/\', 'b']`, 以符号串的形式存储。另外此处，还是利用栈来检测用户输入内容格式的是否正确：
 
 ```javascript
+
 /**
  * check a variable name is satisfy rules.
  * 
@@ -345,7 +304,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
     } else if( s === '(') {
       if( checkStack.length !== 0 && conjunction.indexOf(checkStack[checkStack.length - 1]) === -1) {
         console.log(s, 'left is wrong');
-        return s;
+        return false;
       }
       checkStack.push( s);
     } else if( s === ')') {
@@ -363,7 +322,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
         while( checkStack.length && checkStack[checkStack.length-1] === '~'){
           checkStack.pop();
         }
-        checkStack.push(temp);
+        checkStack.push(temp); 
       }
     } else if( conjunction.indexOf(s) !== -1) {
       if( s === '~') {
@@ -382,7 +341,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
       } else {
         if(checkStack.length === 0 ||
           checkStack[checkStack.length - 1] === '(' ||
-          conjunction.indexOf( checkStack[checkStack.length - 1]) !== -1
+          conjunction.indexOf( checkStack[checkStack.length - 1]) !== -1 
           ) {
           console.log(s, " left should be a vars")
           return false;
@@ -391,7 +350,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
         }
       }
     } else if( satisfyVariable(s)) {
-      if( checkStack.length === 0
+      if( checkStack.length === 0 
         || checkStack[checkStack.length - 1] === '(')  {
         checkStack.push(s);
       } else if( satisfyVariable(checkStack[checkStack.length - 1])) {
@@ -424,7 +383,7 @@ const check = (inputArr:string[], conjunction:string[]) => {
  * 
  */
 const tokenizer = (inputLine:string) => {
-  const priority = ["~", "/\\", "^", "\\/", "->", "<->"];
+  // console.log(inputLine)
   const pattern = /(\s*~\s*|\s*\/\\\s*|\s*\^\s*|\s*\\\/\s*|\s*->\s*|\s*<->\s*|\s*\(\s*|\s*\)\s*| )/g
   // cut
   const inputArr = inputLine.split(pattern).filter(value=>value.length);
@@ -432,19 +391,9 @@ const tokenizer = (inputLine:string) => {
   if(!check(inputArr, priority)) {
     throw new Error('The string your input is not valid!');
   }
-  return inputArr.map(value => value.trim()).join('');
+  return inputArr.map(value => value.trim());
 }
-```
 
-再往下一部分，parser:
-
-这里需要考虑一个非常重要的问题：如何保证生成的语法树的正确性？以四则运算为例，1 + 2 * 3 和 (1 + 2) * 3 稍有不慎，即可能生成完全一样的语法树，从而导致计算错误。
-
-其实，到这里之后，我也卡了很久，从刚开始的递归思路，一直想到想到事情的关键：计算顺序。
-
-语法树的目的是生成正确的计算顺序，此时，完全可以用栈来实现。
-
-```javascript
 /**
  * according to the syntax, parse to Props.
  * 
@@ -541,44 +490,159 @@ const parser = (inputArr:string[]) => {
    * @param {string[]} inputArr
    */
   function postToInWithParentheses( inputArr:string[]) {
-    let recordStack:string[] = [];
+    let recordPropStack = [];
     for( let it of inputArr) {
-      console.log('recordStack:', recordStack);
-      console.log(); 
+      // console.log('recordPropStack:', recordPropStack);
+      // console.log(); 
       if( priority.indexOf( it) !== -1) {
-        let conjunction:string;
+        let conjunctionProp: Prop;
         if( it === '~') {
-          conjunction = '(~' +recordStack.pop() +')';
+          conjunctionProp = new PropNot( recordPropStack.pop());
         } else {
-          const temp1 = recordStack.pop(); // 为了保持原有顺序
-          const temp2 = recordStack.pop();
-          // result.push('(');
-          // result.push( temp2);
-          // result.push( it);
-          // result.push( temp1); 
-          // result.push(')');
-          conjunction = '(' + temp2 + it + temp1 + ')';
+          const tempProp1 = recordPropStack.pop();
+          const tempProp2 = recordPropStack.pop();
+          switch(it){
+            case '/\\':
+              conjunctionProp = new PropAnd( tempProp2, tempProp1);
+              break;
+            case '\\/':
+              conjunctionProp = new PropOr( tempProp2, tempProp1);
+              break;
+            case '->':
+              conjunctionProp = new PropImplies( tempProp2, tempProp1);
+              break;
+            case '<->':
+              conjunctionProp = new PropEqual( tempProp2, tempProp1);
+              break;
+            case '^':
+              conjunctionProp = new PropXor( tempProp2, tempProp1);
+              break;
+          }
         }
-        recordStack.push( conjunction);
+        recordPropStack.push( conjunctionProp);
         continue;
       }
-      switch(it) {
-        case '(':
-        case ')':
-        default :
-          recordStack.push( it);
+      if( it !== '(' && it !== ')') {
+        if( it === 'T') {
+          recordPropStack.push( new PropTrue());
+        } else if( it === 'F'){
+          recordPropStack.push( new PropFalse());
+        } else {
+          recordPropStack.push( new PropVar(it));
+        }
       }
     }
-    return recordStack;
+    return recordPropStack.pop(); // 此时，栈内部大小肯定为 1.
   }
-  console.log( inToPost( inputArr))
-  console.log( postToInWithParentheses(inToPost( inputArr))); 
+  // console.log( inToPost( inputArr))
+  // console.log( postToInWithParentheses(inToPost( inputArr)));
+  const postExp = inToPost(inputArr);
+  const parseExp = postToInWithParentheses(postExp);
+  return {
+    postExp,
+    inExpWithParen: parseExp.toString(),
+    propExp: parseExp
+  }
 }
 ```
 
 走完以上代码，我们已经可以实现了最核心的功能。接下来，只需要转化为 Props（其实不转也没事），之后枚举计算即可。
 
-为了保证风格的统一，我们将上述生成的代码转化为 Props 的形式。
+```javascript
+/**
+ * enumerate all cases and calculate
+ * 
+ * @param postExp 
+ */
+const computeAll = (postExp:string[]) => {
+  /**
+   * remove duplicate
+   */
+  function remove() {
+    return postExp.filter(value => value !== '(' && value !== ')' && priority.indexOf(value) === -1).filter((value, index,arr) => arr.indexOf(value, index + 1) === -1);
+  }
+  /**
+   * list all case and computed it.
+   */
+  function listAll() {
+    const allVar = remove();
+    const maxLength = ( 2 ** allVar.length - 1).toString(2).length;
+    for(let i = 0; i < 2 ** allVar.length; i++) {
+      let bin:string = '';
+      for( let j = i.toString(2).length; j < maxLength; j++) {
+        bin += '0';
+      }
+      bin += i.toString(2);
+      let valueCase = {};
+      for( let j = 0; j < bin.length; j++) {
+        if( allVar[j] === 'T') {
+          valueCase[allVar[j]] = true; 
+        } else if( allVar[j] === 'F') {
+          valueCase[allVar[j]] = false;
+        } else {
+          valueCase[allVar[j]] = bin[j] === '1' ? true : false;
+        }
+      }
+      console.log(valueCase);
+      console.log( compute(valueCase));
+      console.log();
+    }
+  }
+  
+  /**
+   * 
+   * @param valueCase 
+   */
+  function compute(valueCase:object) {
+    /**
+     * defined rules
+     * 
+     * @param input1 
+     * @param input2 
+     * @param sign 
+     */
+    function rules(input1: boolean, input2: boolean = false, sign: string) {
+      switch(sign) {
+        case "/\\":
+          return input1 && input2;
+        case "\\/":
+          return input1 || input2;
+        case "~":
+          return !input1;
+        case "^":
+          return input1 !== input2;
+        case "->":
+          return !input1 || input2;
+        case "<->":
+          return input1 === input2;
+      }
+    }
+    let recordPropStack:boolean[] = [];
+    for( let it of postExp) {
+      if( priority.indexOf( it) !== -1) {
+        if( it === '~') {
+          recordPropStack.push( rules(recordPropStack.pop(), false, it));
+        } else {
+          const temp1 = recordPropStack.pop();
+          const temp2 = recordPropStack.pop();
+          recordPropStack.push( rules(temp2, temp1, it));
+        }
+      } else if( it !== '(' && it !== ')') {
+        if( it === 'T') {
+          recordPropStack.push( true);
+        } else if( it === 'F'){
+          recordPropStack.push( false);
+        } else {
+          recordPropStack.push( valueCase[it]);
+        }
+      }
+    }
+    return recordPropStack.pop(); // 此时，栈内部大小肯定为 1.
+  }
+  listAll()
+}
+```
+
 
 ## 样式
 

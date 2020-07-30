@@ -21,13 +21,8 @@ html, body {
   margin-bottom: 1rem;
 }
 
-.button {
-  margin-bottom: 1rem;
-}
-
-
 .input {
-  margin-bottom: 1rem;
+  padding: 1rem;
 }
 
 .input input {
@@ -35,6 +30,27 @@ html, body {
   height: 2rem;
   border-radius: 8px;
 }
+
 .input input:focus {
   border-color: transparent;
+}
+
+
+
+#error span {
+  color: rgb(136, 52, 52);
+}
+
+#truth-table table {
+  border-collapse:collapse;
+  margin: 1rem;
+  color: #555555;
+  text-align: center;
+}
+#truth-table table span {
+  font-weight: normal;
+  padding: 1rem;
+}
+#truth-table table, th, td{
+  border: 1px solid black;
 }
