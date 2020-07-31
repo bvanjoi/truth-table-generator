@@ -170,11 +170,13 @@ const check = (postExp) => {
     }
   }
   console.log('checkAfter: ', checkStack);
-  if( checkStack.length !== 1 && satisfyVariable(checkStack[checkStack.length - 1])) {
+  if( (checkStack.length !== 1 && satisfyVariable(checkStack[checkStack.length - 1]))
+    || (checkStack.length == 1 && !satisfyVariable(checkStack[checkStack.length - 1])) 
+  ) {
     errorInfo.innerHTML = "<span>" + checkStack[checkStack.length - 1] + "</span> should not be here." 
     truthTable.innerHTML = "";
     return false;
-  }
+  } 
   errorInfo.innerHTML = "";
   return true;
 }
@@ -378,3 +380,4 @@ input.addEventListener("input", () => {
   const inExpWithParen = postToInWithParentheses(postExp);
   computeAll(postExp, inExpWithParen)
 })
+
