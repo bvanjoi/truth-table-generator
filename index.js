@@ -220,10 +220,10 @@ function postToInWithParentheses( postExp) {
  */
 const computeAll = (postExp, inExpWithParen) => {
   /**
-   * remove duplicate
+   * remove duplicate, and it not contain true and false;
    */
   function removeDulicateVars() {
-    return postExp.filter(value => value !== '(' && value !== ')' && priority.indexOf(value) === -1).filter((value, index, arr) => arr.indexOf(value, index + 1) === -1);
+    return postExp.filter(value => value !== '(' && value !== ')'&& value!=='T'&& value!=='F' && priority.indexOf(value) === -1).filter((value, index, arr) => arr.indexOf(value, index + 1) === -1);
   }
 
   function extractTrueOrFalse() {
@@ -259,27 +259,27 @@ const computeAll = (postExp, inExpWithParen) => {
       }
     }
     
-    let recordPropStack = [];
+    let recordStack = [];
     for( let it of postExp) {
       if( priority.indexOf( it) !== -1) {
         if( it === '~') {
-          recordPropStack.push( rules(recordPropStack.pop(), false, it));
+          recordStack.push( rules(recordStack.pop(), false, it));
         } else {
-          const temp1 = recordPropStack.pop();
-          const temp2 = recordPropStack.pop();
-          recordPropStack.push( rules(temp2, temp1, it));
+          const temp1 = recordStack.pop();
+          const temp2 = recordStack.pop();
+          recordStack.push( rules(temp2, temp1, it));
         }
       } else if( it !== '(' && it !== ')') {
         if( it === 'T') {
-          recordPropStack.push( true);
+          recordStack.push( true);
         } else if( it === 'F'){
-          recordPropStack.push( false);
+          recordStack.push( false);
         } else {
-          recordPropStack.push( valueCase[it]);
+          recordStack.push( valueCase[it]);
         }
       }
     }
-    return recordPropStack.pop(); // 此时，栈内部大小肯定为 1.
+    return recordStack.pop(); // 此时，栈内部大小肯定为 1.
   }
 
   /**
@@ -307,9 +307,9 @@ const computeAll = (postExp, inExpWithParen) => {
    * @param { string[] } allVar
    * @param { string[] } trueOrFalse
    */
-  function listAll(allVar, trueOrFalse) {
+  function listAll(allVar) {
     const maxLength = ( 2 ** allVar.length - 1).toString(2).length;
-    for(let i = 0; i < 2 ** (allVar.length - trueOrFalse.length); i++) {
+    for(let i = 0; allVar.length && i < 2 ** allVar.length; i++) {
       let bin = '';
       for( let j = i.toString(2).length; j < maxLength; j++) {
         bin += '0';
@@ -317,13 +317,7 @@ const computeAll = (postExp, inExpWithParen) => {
       bin += i.toString(2);
       let valueCase = {};
       for( let j = 0; j < bin.length; j++) {
-        if( allVar[j] === 'T') {
-          valueCase[allVar[j]] = true; 
-        } else if( allVar[j] === 'F') {
-          valueCase[allVar[j]] = false;
-        } else {
-          valueCase[allVar[j]] = bin[j] === '1' ? true : false;
-        }
+        valueCase[allVar[j]] = bin[j] === '1' ? true : false;
       }
       createTableTd(valueCase, compute(valueCase));
     }
@@ -332,6 +326,7 @@ const computeAll = (postExp, inExpWithParen) => {
   let tr = document.createElement('tr');
   const allVar = removeDulicateVars();
   const trueOrFalse = extractTrueOrFalse();
+  //创建表头
   for(let it of allVar) {
     let th = document.createElement('th');
     if( it === 'T') {
@@ -343,11 +338,9 @@ const computeAll = (postExp, inExpWithParen) => {
     }
     tr.appendChild(th);
   }
-  //创建表头
   let th = document.createElement('th') ;
   th.innerHTML = "<span style='font-weight:600;'>" + inExpWithParen + "</span>";
   tr.appendChild(th);
-  truthTable.innerHTML = "";
   truthTable.appendChild(tr);
   listAll(allVar,trueOrFalse)
 }
@@ -359,7 +352,9 @@ const computeAll = (postExp, inExpWithParen) => {
 
 let input = document.getElementById('input')
 let errorInfo = document.getElementById('error')
-let truthTable = document.getElementById('table')
+let tableDiv = document.getElementById('truth-table');
+let truthTable = document.createElement('table');
+
 
 input.addEventListener("input", () => {
   console.log('---------------------------')
@@ -378,6 +373,7 @@ input.addEventListener("input", () => {
     return ;
   }
   const inExpWithParen = postToInWithParentheses(postExp);
+  tableDiv.appendChild(truthTable)
   computeAll(postExp, inExpWithParen)
 })
 

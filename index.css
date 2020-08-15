@@ -9,20 +9,31 @@ html, body {
 .content {
   border: 1px solid black;
   border-radius: 8px;
-  margin-top: 1rem;
-  min-width: 35rem;
+  margin: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-direction: column;
  }
 
+.content .header {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 10px;
+}
+
+@media screen and (min-width: 1025px) {
+  .input-button {
+    display: none;
+  }
+} 
+
 .overview {
-  margin-bottom: 1rem;
+  margin: 0 1rem 1rem;
 }
 
 .input {
-  padding: 1rem;
+  padding: 10px;
 }
 
 .input input {
@@ -35,22 +46,21 @@ html, body {
   border-color: transparent;
 }
 
-
-
 #error span {
   color: rgb(136, 52, 52);
 }
 
 #truth-table table {
-  border-collapse:collapse;
-  margin: 1rem;
+  border-collapse: collapse;
   color: #555555;
   text-align: center;
+  margin: 10px 20px 20px;
 }
+
 #truth-table table span {
-  font-weight: normal;
-  padding: 1rem;
+  padding: 20px;
 }
+
 #truth-table table, th, td{
   border: 1px solid black;
 }
