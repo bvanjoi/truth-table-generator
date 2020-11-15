@@ -32,8 +32,21 @@ html, body {
   margin: 0 1rem 1rem;
 }
 
+.connectors {
+  padding-bottom: 1rem;
+}
+
+.connectors button {
+  background-color: #ffffff;
+  border: 1px solid #dfdfdf;
+}
+
+.connectors button:focus {
+  background-color: #efefef;
+}
+
 .input {
-  padding: 10px;
+  padding-bottom: 1rem;
 }
 
 .input input {

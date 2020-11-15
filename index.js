@@ -169,7 +169,7 @@ const check = (postExp) => {
       checkStack.push(it);
     }
   }
-  console.log('checkAfter: ', checkStack);
+  console.log('checkAfter: ', checkStack.length === 1);
   if( (checkStack.length !== 1 && satisfyVariable(checkStack[checkStack.length - 1]))
     || (checkStack.length == 1 && !satisfyVariable(checkStack[checkStack.length - 1])) 
   ) {
@@ -222,7 +222,7 @@ const computeAll = (postExp, inExpWithParen) => {
   /**
    * remove duplicate, and it not contain true and false;
    */
-  function removeDulicateVars() {
+  function removeDuplicateVars() {
     return postExp.filter(value => value !== '(' && value !== ')'&& value!=='T'&& value!=='F' && priority.indexOf(value) === -1).filter((value, index, arr) => arr.indexOf(value, index + 1) === -1);
   }
 
@@ -324,7 +324,7 @@ const computeAll = (postExp, inExpWithParen) => {
   }
 
   let tr = document.createElement('tr');
-  const allVar = removeDulicateVars();
+  const allVar = removeDuplicateVars();
   const trueOrFalse = extractTrueOrFalse();
   //创建表头
   for(let it of allVar) {
@@ -354,9 +354,9 @@ let input = document.getElementById('input')
 let errorInfo = document.getElementById('error')
 let tableDiv = document.getElementById('truth-table');
 let truthTable = document.createElement('table');
+let buttons = document.getElementsByTagName('button');
 
-
-input.addEventListener("input", () => {
+const process = () => {
   console.log('---------------------------')
   truthTable.innerHTML = ""
   if( !input.value.trim().length) {
@@ -369,11 +369,23 @@ input.addEventListener("input", () => {
   console.log('postExp: ', postExp);
   const checkResult = check(postExp);
   if( !checkResult) {
-    console.log('input has wrong formate')
+    console.log('input has wrong format')
     return ;
   }
   const inExpWithParen = postToInWithParentheses(postExp);
   tableDiv.appendChild(truthTable)
   computeAll(postExp, inExpWithParen)
+}
+
+input.addEventListener("input", () => {
+  process();
 })
 
+for (let button of buttons) {
+  button.addEventListener('click', e => {
+    // let input = document.getElementById('input');
+    input.value = input.value + ` ${e.target.outerText} `;
+    input.focus();
+    process();
+  })
+}
